@@ -36,6 +36,7 @@ local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 220, 0, 160)
 mainFrame.Position = UDim2.new(0.2, 0, 0.2, 0)
 mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+mainFrame.BackgroundTransparency = 1
 mainFrame.BorderSizePixel = 0
 mainFrame.ClipsDescendants = true
 mainFrame.Visible = false
@@ -52,7 +53,7 @@ bgImage.Position = UDim2.new(0, 0, 0, 0)
 bgImage.BackgroundTransparency = 1
 bgImage.Image = BG_IMAGE_ID
 bgImage.ScaleType = Enum.ScaleType.Crop
-bgImage.ZIndex = 0
+bgImage.ZIndex = 1
 bgImage.Parent = mainFrame
 
 -- ចំណងជើង Hub (ប្រើសម្រាប់អូសផ្ទាំងមេ)
@@ -194,7 +195,12 @@ autoBtn.MouseButton1Click:Connect(function()
 
             -- ហោះឡើងសិន → ហោះត្រង់ទៅជ្រុងម្ខាងទៀត → ចុះភ្លាមៗ
             local flightHeight = 25
-            local speed = 70
+
+            -- ប្រើល្បឿនដែលមាននៅក្នុងហ្គេម (Humanoid.WalkSpeed)
+            -- មិន hard-code speed = 70 ទៀតទេ។
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            local speed = humanoid and humanoid.WalkSpeed or 16
+            speed = math.max(speed, 1)
 
             local startPos = rootPart.Position
             local targetPos = targetZone.Position
@@ -209,7 +215,7 @@ autoBtn.MouseButton1Click:Connect(function()
 
             local riseTween = TweenService:Create(
                 rootPart,
-                TweenInfo.new(riseTime, Enum.EasingStyle.Linear),
+                TweenInfo.new(riseTime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
                 {CFrame = CFrame.new(highStart)}
             )
             riseTween:Play()
@@ -217,14 +223,20 @@ autoBtn.MouseButton1Click:Connect(function()
 
             local travelTween = TweenService:Create(
                 rootPart,
-                TweenInfo.new(travelTime, Enum.EasingStyle.Linear),
+                TweenInfo.new(travelTime, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
                 {CFrame = CFrame.new(highTarget)}
             )
             travelTween:Play()
             travelTween.Completed:Wait()
 
-            -- ដល់ជ្រុងហើយ ចុះភ្លាមៗ
-            rootPart.CFrame = landingTarget
+            -- ដល់ជ្រុងហើយ ចុះ smooth តិចៗ
+            local landingTween = TweenService:Create(
+                rootPart,
+                TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+                {CFrame = landingTarget}
+            )
+            landingTween:Play()
+            landingTween.Completed:Wait()
         end
         
         autoActive = false
