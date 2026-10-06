@@ -1,7 +1,7 @@
--- OLIVER Hub for Huss Valley (Smooth Fly without Stuttering)
+-- OLIVER Hub for Huss Valley (Exact Speed Flight & No Early Jump)
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
@@ -172,7 +172,7 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- ប្រព័ន្ធហោះហើរ (ការពារការទាញៗពេលហោះ)
+-- ប្រព័ន្ធហោះហើរ (Exact Speed Loop - មិនលោតទៅមុន និងដើរត្រូវតាម WalkSpeed ពិតប្រាកដ)
 local autoActive = false
 
 autoBtn.MouseButton1Click:Connect(function()
@@ -204,7 +204,7 @@ autoBtn.MouseButton1Click:Connect(function()
 
             local flightHeight = 12
             local speed = humanoid and humanoid.WalkSpeed or 16
-            speed = math.max(speed, 1)
+            speed = math.max(speed, 16)
 
             local startPos = rootPart.Position
             local targetPos = targetZone.Position
@@ -212,35 +212,31 @@ autoBtn.MouseButton1Click:Connect(function()
             local highTarget = Vector3.new(targetPos.X, targetPos.Y + flightHeight, targetPos.Z)
             local landingTarget = targetZone.CFrame + Vector3.new(0, 3, 0)
 
-            -- 🛑 បិទកម្លាំងទប់របស់ Humanoid មិនឱ្យទាញខុសប្រក្រតី
-            if humanoid then
-                humanoid.PlatformStand = true
-            end
-            rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-
-            -- 1. ហោះឡើងលើភ្លាមៗ (Teleport)
+            -- 1. ហោះឡើងលើភ្លាមៗ (Teleport Up)
             rootPart.CFrame = CFrame.new(highStart)
-            task.wait(0.03)
+            task.wait(0.05)
 
-            -- 2. ហោះទៅមុខរលូនតាមល្បឿនក្នុងហ្គេម (WalkSpeed)
-            local travelDistance = (highStart - highTarget).Magnitude
-            local travelTime = math.max(travelDistance / speed, 0.08)
+            -- 2. ហោះទៅមុខដោយផ្អែកលើការវាស់ចម្ងាយពិតប្រាកដជារៀងរាល់ Frame (មិនលោតទៅមុន និងមិនរំលងពេល)
+            local currentPos = rootPart.Position
+            while autoActive and (currentPos - highTarget).Magnitude > 2 do
+                local dt = RunService.Heartbeat:Wait()
+                local direction = (highTarget - currentPos).Unit
+                local step = speed * dt
+                
+                if step >= (highTarget - currentPos).Magnitude then
+                    currentPos = highTarget
+                else
+                    currentPos = currentPos + direction * step
+                end
+                
+                rootPart.CFrame = CFrame.new(currentPos)
+                rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+            end
 
-            local travelTween = TweenService:Create(
-                rootPart,
-                TweenInfo.new(travelTime, Enum.EasingStyle.Linear),
-                {CFrame = CFrame.new(highTarget)}
-            )
-            travelTween:Play()
-            travelTween.Completed:Wait()
-
-            -- 3. ចុះចតដល់គោលដៅភ្លាមៗ (Teleport)
-            rootPart.CFrame = landingTarget
-            rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-
-            -- 🔓 បើកដំណើរការ Humanoid ធម្មតាវិញ
-            if humanoid then
-                humanoid.PlatformStand = false
+            -- 3. ចុះចតដល់គោលដៅភ្លាមៗ (Teleport Down)
+            if autoActive then
+                rootPart.CFrame = landingTarget
+                rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
             end
         end
         
