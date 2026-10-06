@@ -173,32 +173,54 @@ autoBtn.MouseButton1Click:Connect(function()
             return
         end
         
-        local rootPart = character.HumanoidRootPart
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        if not rootPart or not rootPart:IsA("BasePart") then
+            autoActive = false
+            autoBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+            autoBtn.Text = "Auto: OFF"
+            return
+        end
+
+        local function getCFrame(instance)
+            if not instance then return nil end
+            if instance:IsA("BasePart") then
+                return instance.CFrame
+            end
+            if instance:IsA("Model") then
+                return instance:GetPivot()
+            end
+            local part = instance:FindFirstChildWhichIsA("BasePart", true)
+            return part and part.CFrame or nil
+        end
+
         local zoneA = workspace:FindFirstChild("SafezoneASide", true)
         local zoneB = workspace:FindFirstChild("SafezoneBSide", true)
-        
-        if zoneA and zoneB then
-            local distA = (rootPart.Position - zoneA.Position).Magnitude
-            local distB = (rootPart.Position - zoneB.Position).Magnitude
-            
+        local cframeA = getCFrame(zoneA)
+        local cframeB = getCFrame(zoneB)
+
+        if cframeA and cframeB then
+            local distA = (rootPart.Position - cframeA.Position).Magnitude
+            local distB = (rootPart.Position - cframeB.Position).Magnitude
+
             local destination
             if distA < distB then
-                destination = zoneB.CFrame + Vector3.new(0, 3, 0)
+                destination = cframeB + Vector3.new(0, 3, 0)
             else
-                destination = zoneA.CFrame + Vector3.new(0, 3, 0)
+                destination = cframeA + Vector3.new(0, 3, 0)
             end
-            
+
             local distance = (rootPart.Position - destination.Position).Magnitude
             local speed = 70
             local timeToTravel = distance / speed
-            
-            local tweenInfo = TweenInfo.new(timeToTravel, Enum.EasingStyle.Linear)
-            local tween = TweenService:Create(rootPart, tweenInfo, {CFrame = destination})
-            tween:Play()
-            
-            task.wait(timeToTravel)
+
+            if timeToTravel > 0 then
+                local tweenInfo = TweenInfo.new(timeToTravel, Enum.EasingStyle.Linear)
+                local tween = TweenService:Create(rootPart, tweenInfo, {CFrame = destination})
+                tween:Play()
+                tween.Completed:Wait()
+            end
         end
-        
+
         autoActive = false
         autoBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
         autoBtn.Text = "Auto: OFF"
