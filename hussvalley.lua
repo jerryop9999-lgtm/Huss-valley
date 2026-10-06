@@ -8,7 +8,7 @@ local player = Players.LocalPlayer
 
 -- 📌 កន្លែងសម្រាប់ដាក់ Image ID របស់អ្នក (អាចប្តូរលេខ ID បានតាមតម្រូវការ)
 local LOGO_ID = "rbxassetid://131522091567355"     -- Logo ID សម្រាប់ប៊ូតុងអណ្តែត
-local BG_IMAGE_ID = "rbxassetid://131222926373937" -- Background Image ID សម្រាប់ Main Frame
+local BG_IMAGE_ID = "rbxassetid://132347212228560" -- Background Image ID សម្រាប់ Main Frame
 
 -- លុប UI ចាស់ចោលសិនដើម្បីកុំឱ្យជាន់គ្នា
 if CoreGui:FindFirstChild("OliverHussValleyHub") then
@@ -59,7 +59,7 @@ titleBar.Size = UDim2.new(1, 0, 0, 40)
 titleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 titleBar.BackgroundTransparency = 0.4 -- ធ្វើឱ្យស្រាលបន្តិចមើលឃើញ Background ខាងក្រោម
 titleBar.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleBar.Text = "⚡ OLIVER HUB"
+titleBar.Text = "OLIVER HUB"
 titleBar.Font = Enum.Font.GothamBold
 titleBar.TextSize = 12
 titleBar.Parent = mainFrame
@@ -84,8 +84,53 @@ local autoCorner = Instance.new("UICorner")
 autoCorner.CornerRadius = UDim.new(0, 8)
 autoCorner.Parent = autoBtn
 
--- បើក/បិទ ផ្ទាំង Main Frame ពេលចុចលើ Logo Button
-openBtn.MouseButton1Click:Connect(function()
+-- ប៊ូតុងអណ្តែត: អូសបានដោយ Mouse/Touch ហើយចុចធម្មតាសម្រាប់បើក/បិទ Main Frame
+local buttonDragging = false
+local buttonDragStart
+local buttonStartPos
+local buttonMoved = false
+local activeButtonInput
+
+openBtn.Active = true
+
+openBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        buttonDragging = true
+        buttonMoved = false
+        activeButtonInput = input
+        buttonDragStart = input.Position
+        buttonStartPos = openBtn.Position
+    end
+end)
+
+openBtn.InputEnded:Connect(function(input)
+    if input == activeButtonInput or input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        buttonDragging = false
+        activeButtonInput = nil
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if not buttonDragging then return end
+    if input.UserInputType ~= Enum.UserInputType.MouseMovement and input.UserInputType ~= Enum.UserInputType.Touch then return end
+
+    local delta = input.Position - buttonDragStart
+    if math.abs(delta.X) > 5 or math.abs(delta.Y) > 5 then
+        buttonMoved = true
+    end
+
+    openBtn.Position = UDim2.new(
+        buttonStartPos.X.Scale, buttonStartPos.X.Offset + delta.X,
+        buttonStartPos.Y.Scale, buttonStartPos.Y.Offset + delta.Y
+    )
+end)
+
+openBtn.Activated:Connect(function()
+    -- បើមានការអូស កុំឲ្យវាបើក/បិទ Main Frame ដោយចៃដន្យ
+    if buttonMoved then
+        buttonMoved = false
+        return
+    end
     mainFrame.Visible = not mainFrame.Visible
 end)
 
@@ -159,3 +204,4 @@ autoBtn.MouseButton1Click:Connect(function()
         autoBtn.Text = "Auto: OFF"
     end)
 end)
+nd)
