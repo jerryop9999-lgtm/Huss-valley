@@ -210,8 +210,8 @@ autoBtn.MouseButton1Click:Connect(function()
 
             local riseDistance = (startPos - highStart).Magnitude
             local travelDistance = (highStart - highTarget).Magnitude
-            local riseTime = math.max(riseDistance / math.max(speed * 2.5, 1), 0.08)
-            local travelTime = math.max(travelDistance / speed, 0.15)
+            local riseTime = 0.08
+            local travelTime = math.max(travelDistance / speed, 0.10)
 
             local riseTween = TweenService:Create(
                 rootPart,
@@ -232,7 +232,7 @@ autoBtn.MouseButton1Click:Connect(function()
             -- ដល់ជ្រុងហើយ ចុះ smooth តិចៗ
             local landingTween = TweenService:Create(
                 rootPart,
-                TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+                TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
                 {CFrame = landingTarget}
             )
             landingTween:Play()
