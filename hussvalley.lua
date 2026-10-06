@@ -1,29 +1,14 @@
--- OLIVER Hub for Huss Valley (Exact Speed Flight & No Early Jump)
+-- OLIVER Hub for Huss Valley (Custom Logo & Background Image)
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 
--- 🛡 ប្រព័ន្ធការពារ Anti-Kick / Anti-Cheat Hook
-pcall(function()
-    local mt = getrawmetatable(game)
-    setreadonly(mt, false)
-    local oldNamecall = mt.__namecall
-    mt.__namecall = newcclosure(function(self, ...)
-        local method = getnamecallmethod()
-        if tostring(method) == "Kick" or tostring(method) == "kick" then
-            return 
-        end
-        return oldNamecall(self, ...)
-    end)
-    setreadonly(mt, true)
-end)
-
--- 📌 ព័ត៌មានរូបភាពរបស់អ្នក
-local LOGO_ID = "rbxassetid://131522091567355"     
-local BG_IMAGE_ID = "rbxassetid://132347212228560" 
+-- 📌 កន្លែងសម្រាប់ដាក់ Image ID របស់អ្នក (អាចប្តូរលេខ ID បានតាមតម្រូវការ)
+local LOGO_ID = "rbxassetid://131522091567355"     -- Logo ID សម្រាប់ប៊ូតុងអណ្តែត
+local BG_IMAGE_ID = "rbxassetid://132347212228560" -- Background Image ID សម្រាប់ Main Frame
 
 -- លុប UI ចាស់ចោលសិនដើម្បីកុំឱ្យជាន់គ្នា
 if CoreGui:FindFirstChild("OliverHussValleyHub") then
@@ -34,7 +19,7 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "OliverHussValleyHub"
 screenGui.Parent = CoreGui
 
--- ប៊ូតុងអណ្តែត (ImageButton) ជាមួយ Logo ID
+-- ប៊ូតុងអណ្តែត (ImageButton) ជាមួយ Logo ID សម្រាប់បើក/បិទផ្ទាំង Hub
 local openBtn = Instance.new("ImageButton")
 openBtn.Size = UDim2.new(0, 50, 0, 50)
 openBtn.Position = UDim2.new(0.05, 0, 0.1, 0)
@@ -71,11 +56,11 @@ bgImage.ScaleType = Enum.ScaleType.Crop
 bgImage.ZIndex = 1
 bgImage.Parent = mainFrame
 
--- ចំណងជើង Hub (សម្រាប់អូសផ្ទាំងមេ)
+-- ចំណងជើង Hub (ប្រើសម្រាប់អូសផ្ទាំងមេ)
 local titleBar = Instance.new("TextLabel")
 titleBar.Size = UDim2.new(1, 0, 0, 40)
 titleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-titleBar.BackgroundTransparency = 0.4
+titleBar.BackgroundTransparency = 0.4 -- ធ្វើឱ្យស្រាលបន្តិចមើលឃើញ Background ខាងក្រោម
 titleBar.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleBar.Text = "OLIVER HUB"
 titleBar.Font = Enum.Font.GothamBold
@@ -104,7 +89,7 @@ local autoCorner = Instance.new("UICorner")
 autoCorner.CornerRadius = UDim.new(0, 8)
 autoCorner.Parent = autoBtn
 
--- ប្រព័ន្ធអូសប៊ូតុងអណ្តែត
+-- ប៊ូតុងអណ្តែត: អូសបានដោយ Mouse/Touch ហើយចុចធម្មតាសម្រាប់បើក/បិទ Main Frame
 local buttonDragging = false
 local buttonDragStart
 local buttonStartPos
@@ -112,6 +97,7 @@ local buttonMoved = false
 local activeButtonInput
 
 openBtn.Active = true
+
 openBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         buttonDragging = true
@@ -145,6 +131,7 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 openBtn.Activated:Connect(function()
+    -- បើមានការអូស កុំឲ្យវាបើក/បិទ Main Frame ដោយចៃដន្យ
     if buttonMoved then
         buttonMoved = false
         return
@@ -152,7 +139,7 @@ openBtn.Activated:Connect(function()
     mainFrame.Visible = not mainFrame.Visible
 end)
 
--- ប្រព័ន្ធអូស Main Frame
+-- ប្រព័ន្ធអូស Main Frame ចេញពី TitleBar (Draggable)
 local dragging, dragStart, startPos
 titleBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -172,7 +159,7 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- ប្រព័ន្ធហោះហើរ (Exact Speed Loop - មិនលោតទៅមុន និងដើរត្រូវតាម WalkSpeed ពិតប្រាកដ)
+-- ប្រព័ន្ធ Auto Fly និងបិទស្វ័យប្រវត្តិពេលដល់គោលដៅ
 local autoActive = false
 
 autoBtn.MouseButton1Click:Connect(function()
@@ -192,7 +179,6 @@ autoBtn.MouseButton1Click:Connect(function()
         end
         
         local rootPart = character.HumanoidRootPart
-        local humanoid = character:FindFirstChildOfClass("Humanoid")
         local zoneA = workspace:FindFirstChild("SafezoneASide", true)
         local zoneB = workspace:FindFirstChild("SafezoneBSide", true)
         
@@ -200,11 +186,21 @@ autoBtn.MouseButton1Click:Connect(function()
             local distA = (rootPart.Position - zoneA.Position).Magnitude
             local distB = (rootPart.Position - zoneB.Position).Magnitude
             
-            local targetZone = (distA < distB) and zoneB or zoneA
+            local targetZone
+            if distA < distB then
+                targetZone = zoneB
+            else
+                targetZone = zoneA
+            end
 
+            -- ហោះឡើងសិន → ហោះត្រង់ទៅជ្រុងម្ខាងទៀត → ចុះភ្លាមៗ
             local flightHeight = 12
+
+            -- ប្រើល្បឿនដែលមាននៅក្នុងហ្គេម (Humanoid.WalkSpeed)
+            -- មិន hard-code speed = 70 ទៀតទេ។
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
             local speed = humanoid and humanoid.WalkSpeed or 16
-            speed = math.max(speed, 16)
+            speed = math.max(speed * 2, 1)
 
             local startPos = rootPart.Position
             local targetPos = targetZone.Position
@@ -212,35 +208,37 @@ autoBtn.MouseButton1Click:Connect(function()
             local highTarget = Vector3.new(targetPos.X, targetPos.Y + flightHeight, targetPos.Z)
             local landingTarget = targetZone.CFrame + Vector3.new(0, 3, 0)
 
-            -- 1. ហោះឡើងលើភ្លាមៗ (Teleport Up)
-            rootPart.CFrame = CFrame.new(highStart)
-            task.wait(0.05)
+            local riseDistance = (startPos - highStart).Magnitude
+            local travelDistance = (highStart - highTarget).Magnitude
+            local riseTime = 0.04
+            local travelTime = math.max(travelDistance / speed, 0.08)
 
-            -- 2. ហោះទៅមុខដោយផ្អែកលើការវាស់ចម្ងាយពិតប្រាកដជារៀងរាល់ Frame (មិនលោតទៅមុន និងមិនរំលងពេល)
-            local currentPos = rootPart.Position
-            while autoActive and (currentPos - highTarget).Magnitude > 2 do
-                local dt = RunService.Heartbeat:Wait()
-                local direction = (highTarget - currentPos).Unit
-                local step = speed * dt
-                
-                if step >= (highTarget - currentPos).Magnitude then
-                    currentPos = highTarget
-                else
-                    currentPos = currentPos + direction * step
-                end
-                
-                rootPart.CFrame = CFrame.new(currentPos)
-                rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-            end
+            local riseTween = TweenService:Create(
+                rootPart,
+                TweenInfo.new(riseTime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                {CFrame = CFrame.new(highStart)}
+            )
+            riseTween:Play()
+            riseTween.Completed:Wait()
 
-            -- 3. ចុះចតដល់គោលដៅភ្លាមៗ (Teleport Down)
-            if autoActive then
-                rootPart.CFrame = landingTarget
-                rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-            end
+            local travelTween = TweenService:Create(
+                rootPart,
+                TweenInfo.new(travelTime, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+                {CFrame = CFrame.new(highTarget)}
+            )
+            travelTween:Play()
+            travelTween.Completed:Wait()
+
+            -- ដល់ជ្រុងហើយ ចុះ smooth តិចៗ
+            local landingTween = TweenService:Create(
+                rootPart,
+                TweenInfo.new(0.04, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+                {CFrame = landingTarget}
+            )
+            landingTween:Play()
+            landingTween.Completed:Wait()
         end
         
-        -- បិទ Auto ស្វ័យប្រវត្តិពេលដល់គោលដៅ
         autoActive = false
         autoBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
         autoBtn.Text = "Auto: OFF"
