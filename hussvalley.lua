@@ -194,7 +194,7 @@ autoBtn.MouseButton1Click:Connect(function()
             end
 
             -- ហោះឡើងសិន → ហោះត្រង់ទៅជ្រុងម្ខាងទៀត → ចុះភ្លាមៗ
-            local flightHeight = 25
+            local flightHeight = 12
 
             -- ប្រើល្បឿនដែលមាននៅក្នុងហ្គេម (Humanoid.WalkSpeed)
             -- មិន hard-code speed = 70 ទៀតទេ។
@@ -210,7 +210,7 @@ autoBtn.MouseButton1Click:Connect(function()
 
             local riseDistance = (startPos - highStart).Magnitude
             local travelDistance = (highStart - highTarget).Magnitude
-            local riseTime = math.max(riseDistance / speed, 0.15)
+            local riseTime = math.max(riseDistance / math.max(speed * 2.5, 1), 0.08)
             local travelTime = math.max(travelDistance / speed, 0.15)
 
             local riseTween = TweenService:Create(
@@ -232,7 +232,7 @@ autoBtn.MouseButton1Click:Connect(function()
             -- ដល់ជ្រុងហើយ ចុះ smooth តិចៗ
             local landingTween = TweenService:Create(
                 rootPart,
-                TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+                TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
                 {CFrame = landingTarget}
             )
             landingTween:Play()
