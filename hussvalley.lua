@@ -204,4 +204,3 @@ autoBtn.MouseButton1Click:Connect(function()
         autoBtn.Text = "Auto: OFF"
     end)
 end)
-nd)
