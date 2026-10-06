@@ -48,9 +48,11 @@ mainCorner.Parent = mainFrame
 -- 🖼️ Background Image សម្រាប់ Main Frame
 local bgImage = Instance.new("ImageLabel")
 bgImage.Size = UDim2.new(1, 0, 1, 0)
+bgImage.Position = UDim2.new(0, 0, 0, 0)
 bgImage.BackgroundTransparency = 1
 bgImage.Image = BG_IMAGE_ID
-bgImage.ScaleType = Enum.ScaleType.Slice
+bgImage.ScaleType = Enum.ScaleType.Crop
+bgImage.ZIndex = 0
 bgImage.Parent = mainFrame
 
 -- ចំណងជើង Hub (ប្រើសម្រាប់អូសផ្ទាំងមេ)
@@ -62,6 +64,7 @@ titleBar.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleBar.Text = "OLIVER HUB"
 titleBar.Font = Enum.Font.GothamBold
 titleBar.TextSize = 12
+titleBar.ZIndex = 2
 titleBar.Parent = mainFrame
 
 local titleCorner = Instance.new("UICorner")
@@ -78,6 +81,7 @@ autoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 autoBtn.Text = "Auto: OFF"
 autoBtn.Font = Enum.Font.GothamBold
 autoBtn.TextSize = 14
+autoBtn.ZIndex = 2
 autoBtn.Parent = mainFrame
 
 local autoCorner = Instance.new("UICorner")
@@ -173,54 +177,56 @@ autoBtn.MouseButton1Click:Connect(function()
             return
         end
         
-        local rootPart = character:FindFirstChild("HumanoidRootPart")
-        if not rootPart or not rootPart:IsA("BasePart") then
-            autoActive = false
-            autoBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-            autoBtn.Text = "Auto: OFF"
-            return
-        end
-
-        local function getCFrame(instance)
-            if not instance then return nil end
-            if instance:IsA("BasePart") then
-                return instance.CFrame
-            end
-            if instance:IsA("Model") then
-                return instance:GetPivot()
-            end
-            local part = instance:FindFirstChildWhichIsA("BasePart", true)
-            return part and part.CFrame or nil
-        end
-
+        local rootPart = character.HumanoidRootPart
         local zoneA = workspace:FindFirstChild("SafezoneASide", true)
         local zoneB = workspace:FindFirstChild("SafezoneBSide", true)
-        local cframeA = getCFrame(zoneA)
-        local cframeB = getCFrame(zoneB)
-
-        if cframeA and cframeB then
-            local distA = (rootPart.Position - cframeA.Position).Magnitude
-            local distB = (rootPart.Position - cframeB.Position).Magnitude
-
-            local destination
+        
+        if zoneA and zoneB then
+            local distA = (rootPart.Position - zoneA.Position).Magnitude
+            local distB = (rootPart.Position - zoneB.Position).Magnitude
+            
+            local targetZone
             if distA < distB then
-                destination = cframeB + Vector3.new(0, 3, 0)
+                targetZone = zoneB
             else
-                destination = cframeA + Vector3.new(0, 3, 0)
+                targetZone = zoneA
             end
 
-            local distance = (rootPart.Position - destination.Position).Magnitude
+            -- ហោះឡើងសិន → ហោះត្រង់ទៅជ្រុងម្ខាងទៀត → ចុះភ្លាមៗ
+            local flightHeight = 25
             local speed = 70
-            local timeToTravel = distance / speed
 
-            if timeToTravel > 0 then
-                local tweenInfo = TweenInfo.new(timeToTravel, Enum.EasingStyle.Linear)
-                local tween = TweenService:Create(rootPart, tweenInfo, {CFrame = destination})
-                tween:Play()
-                tween.Completed:Wait()
-            end
+            local startPos = rootPart.Position
+            local targetPos = targetZone.Position
+            local highStart = Vector3.new(startPos.X, targetPos.Y + flightHeight, startPos.Z)
+            local highTarget = Vector3.new(targetPos.X, targetPos.Y + flightHeight, targetPos.Z)
+            local landingTarget = targetZone.CFrame + Vector3.new(0, 3, 0)
+
+            local riseDistance = (startPos - highStart).Magnitude
+            local travelDistance = (highStart - highTarget).Magnitude
+            local riseTime = math.max(riseDistance / speed, 0.15)
+            local travelTime = math.max(travelDistance / speed, 0.15)
+
+            local riseTween = TweenService:Create(
+                rootPart,
+                TweenInfo.new(riseTime, Enum.EasingStyle.Linear),
+                {CFrame = CFrame.new(highStart)}
+            )
+            riseTween:Play()
+            riseTween.Completed:Wait()
+
+            local travelTween = TweenService:Create(
+                rootPart,
+                TweenInfo.new(travelTime, Enum.EasingStyle.Linear),
+                {CFrame = CFrame.new(highTarget)}
+            )
+            travelTween:Play()
+            travelTween.Completed:Wait()
+
+            -- ដល់ជ្រុងហើយ ចុះភ្លាមៗ
+            rootPart.CFrame = landingTarget
         end
-
+        
         autoActive = false
         autoBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
         autoBtn.Text = "Auto: OFF"
